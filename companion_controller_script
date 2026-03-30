@@ -109,8 +109,7 @@ def receive(sender, command, data, buffer):
 
         case "Restart_Script":
             log("[SCRIPT] Restarting script", buffer)
-            os.execv(sys.executable, ['python'] + sys.argv)
-
+            os._exit(0)
         case "Recv_Satellite_IP":
             if data:
                 set_satellite_ip(data[0])
