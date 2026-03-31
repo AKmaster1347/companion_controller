@@ -257,7 +257,8 @@ def osc_handler(address, *args):
 
     # sanitize the raw string: replace spaces with underscores
     raw_sanitized = raw.replace(" ", "_")
-
+    print(raw)
+    print(raw_sanitized)
     try:
         # parse the JSON string
         parsed = json.loads(raw_sanitized)
