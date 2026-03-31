@@ -11,7 +11,7 @@ from pythonosc.osc_server import ThreadingOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
 
 # ---------------- USER CONFIG ----------------
-companion_hostname_list = ["Lighting.local","Aspire14.local"]
+companion_hostname_list = ["Aspire14.local","Lighting.local"]
 
 osc_port = 7777
 
