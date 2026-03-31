@@ -247,6 +247,7 @@ def dispatch_logs(sender, buffer):
 
 def osc_handler(address, *args):
     if address != receive_path:
+        log("[OSC ERROR] Incorrect path")
         return
 
     if not args:
