@@ -126,7 +126,7 @@ def receive(sender, command, data, buffer):
             if data:
                 set_satellite_ip(data[0])
 
-        case "Recv System_Shutdown":
+        case "Recv System Shutdown":
             log("[SYSTEM] Shutdown command received", buffer)
             os.system("sudo shutdown now")
 
