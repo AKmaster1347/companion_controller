@@ -16,7 +16,7 @@ companion_hostname_list = ["Aspire14.local","Lighting.local"]
 osc_port = 7777
 
 send_path = "/custom-variable/RaspberryPiData/value"
-receive_path = "/python/script/data"
+receive_path = "/python/script/command"
 
 pi_name = "RaspberryPi #1 - User's Pi"
 MAX_LOGS = 100
@@ -56,7 +56,7 @@ def receive(sender, command, data, buffer):
             ])
 
         case "Send Hostname List":
-            send(["Hostnames", companion_hostname_list])
+            send(["Hostname List", companion_hostname_list])
 
         case "Set Host":
             if data:
@@ -257,7 +257,8 @@ def osc_handler(address, *args):
     print(f"Raw input: {raw}")
 
     # remove first and last character
-    raw_trimmed = raw[1:-1] if len(raw) > 2 else raw
+    ## raw_trimmed = raw[1:-1] if len(raw) > 2 else raw
+    raw_trimmed = raw
     print(f"Trimmed input: {raw_trimmed}")
 
     try:
