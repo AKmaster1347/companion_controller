@@ -47,7 +47,7 @@ def receive(sender, command, data, buffer):
         case "Send Ping":
             send([pi_name, local_ip])
 
-        case "Send_Connection_Status":
+        case "Send Connection Status":
             send([
                 pi_name,
                 companion_network_address,
@@ -79,7 +79,7 @@ def receive(sender, command, data, buffer):
             }
             send(["System_Stats", stats])
 
-        case "Update Script":
+        case "Recv Script Update":
             log("[SCRIPT] Starting safe update...", buffer)
 
             try:
@@ -127,15 +127,15 @@ def receive(sender, command, data, buffer):
                 set_satellite_ip(data[0])
 
         case "Recv System Shutdown":
-            log("[SYSTEM] Shutdown command received", buffer)
+            log("[SYSTEM] System shuting down", buffer)
             os.system("sudo shutdown now")
 
-        case "Recv Reboot":
-            log("[SYSTEM] Reboot command received", buffer)
+        case "Recv System Reboot":
+            log("[SYSTEM] System rebooting", buffer)
             os.system("sudo reboot")
 
         case "Recv Script Shutdown":
-            log("[SYSTEM] Script shutdown", buffer)
+            log("[SYSTEM] Script shuting down", buffer)
             os._exit(0)
 
         case _:
