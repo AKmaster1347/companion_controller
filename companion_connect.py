@@ -254,16 +254,17 @@ def osc_handler(address, *args):
         return
 
     raw = args[0]
+    print(f"Raw input: {raw}")
 
-    # sanitize the raw string: replace spaces with underscores
-    raw_sanitized = raw.replace(" ", "_")
-    print(raw)
-    print(raw_sanitized)
+    # remove first and last character
+    raw_trimmed = raw[1:-1] if len(raw) > 2 else raw
+    print(f"Trimmed input: {raw_trimmed}")
+
     try:
         # parse the JSON string
-        parsed = json.loads(raw_sanitized)
+        parsed = json.loads(raw_trimmed)
     except Exception as e:
-        log(f"[OSC PARSE ERROR] Invalid JSON: {raw} → {e}")
+        log(f"[OSC PARSE ERROR] Invalid JSON: {raw_trimmed} → {e}")
         return
 
     # minimal validation
@@ -275,7 +276,7 @@ def osc_handler(address, *args):
     command = parsed[1]
     data = parsed[2:] if len(parsed) > 2 else []
 
-    # call receive OUTSIDE the try block to allow things like os._exit() to propagate
+    # call receive OUTSIDE the try block so os._exit() works
     buffer = []
     receive(sender, command, data, buffer)
     dispatch_logs(sender, buffer)
