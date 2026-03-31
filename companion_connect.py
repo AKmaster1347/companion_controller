@@ -27,28 +27,35 @@ VENV_PYTHON = "/home/tech-ministry/companion-env/bin/python"
 
 
 # ---------------- RUNTIME VARIABLES ----------------
+SCRIPT_VERSION = 1.0
+
 SCRIPT_PATH = f"{REPO_DIR}/companion_connect.py"
 
-companion_network_address = None
+companion_host_name = None
+companion_host_ip = None
 local_ip = None
 satellite_api = "http://127.0.0.1:9999/api"
 
-log_buffer = []
+log_main = []
+log_command = []
 clients = {}
 # --------------------------------------------------
 
 
 # ---------------- COMMANDS ----------------
-def receive(sender, command, data, buffer):
-    log(f"[OSC RECEIVE] {command} from {sender}", buffer)
+def receive(sender, command, data):
+    log(f"[OSC RECEIVE] {command} from {sender} with data {data}")
 
     match command:
-
+        # Send commands
         case "Send Ping":
-            send([pi_name, local_ip])
+            log(f"[OSC SEND CMD] Sending ping to {companion_host_name} ({companion_host_ip})")
+            send(["Recv RaspberryPi Ping", pi_name, local_ip])
 
         case "Send Connection Status":
+            log(f"[OSC SEND CMD] Sending connection status to {companion_host} ({companion_host_ip})")
             send([
+                "Recv RaspberryPi Connection Status",
                 pi_name,
                 companion_network_address,
                 get_satellite_ip(),
@@ -56,20 +63,12 @@ def receive(sender, command, data, buffer):
             ])
 
         case "Send Hostname List":
-            send(["Hostname List", companion_hostname_list])
-
-        case "Set Host":
-            if data:
-                new_host = data[0]
-                log(f"[CMD] Setting host → {new_host}", buffer)
-                set_satellite_ip(new_host)
-
-        case "Get Host":
+            log(f"[OSC SEND CMD] Sending hostname list to {companion_host}")
+            send(["Recv RaspberryPi Hostname List", pi_name, companion_hostname_list])
+       
+        case "Send Companion Host":
             send(["Host", get_satellite_ip()])
 
-        case "Recv Reboot Satellite":
-            log("[SAT] Restarting satellite service", buffer)
-            os.system("sudo systemctl restart companion-satellite")
 
         case "Send System Stats":
             stats = {
@@ -79,6 +78,17 @@ def receive(sender, command, data, buffer):
             }
             send(["System_Stats", stats])
 
+        # Recieve commands
+        case "Recv Set Host":
+            if data:
+                new_host = data[0]
+                log(f"[OSC RECV CMD] Setting host → {new_host}")
+                set_satellite_ip(new_host)
+    
+        case "Recv Reboot Satellite":
+            log("[SAT] Restarting satellite service")
+            os.system("sudo systemctl restart companion-satellite")
+        
         case "Recv Script Update":
             log("[SCRIPT] Starting safe update...", buffer)
 
@@ -182,11 +192,11 @@ def log(message, buffer=None):
 
 def send(data):
     try:
-        client = get_client(companion_network_address)
+        client = get_client(companion_host_ip)
         client.send_message(send_path, json.dumps(data))
         log(f"[OSC SEND] {data}")
     except Exception as e:
-        log(f"[OSC ERROR] {e}")
+        log(f"[ERROR] Sending error: {e}")
 
 
 def resolve_sender(sender):
@@ -323,6 +333,14 @@ def check_satellite_connectivity():
 
 
 # ---------------- NETWORK ----------------
+def get_hostname_socket():
+    """Retrieves the system's hostname using the socket module."""
+    try:
+        hostname = socket.gethostname()
+        return hostname
+    except socket.error as e:
+        return f"Error getting hostname: {e}"
+
 def get_local_ip():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
