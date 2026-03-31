@@ -20,16 +20,20 @@ receive_path = "/python/script/data"
 
 pi_name = "RaspberryPi #1 - User's Pi"
 MAX_LOGS = 100
+
+REPO_DIR = "/home/tech-ministry/companion_controller"
+VENV_PYTHON = "/home/tech-ministry/companion-env/bin/python"
 # --------------------------------------------
 
 
 # ---------------- RUNTIME VARIABLES ----------------
+SCRIPT_PATH = f"{REPO_DIR}/companion_connect.py"
+
 companion_network_address = None
 local_ip = None
 satellite_api = "http://127.0.0.1:9999/api"
 
 log_buffer = []
-
 clients = {}
 # --------------------------------------------------
 
@@ -76,40 +80,48 @@ def receive(sender, command, data, buffer):
             send(["System_Stats", stats])
 
         case "Update_Script":
-            log("[SCRIPT] Updating from Git...", buffer)
-        
+            log("[SCRIPT] Starting safe update...", buffer)
+
             try:
-                # Step 1: Git pull
-                result = os.system(f"cd {REPO_DIR} && git pull")
-        
-                if result != 0:
+                # Step 1: Get current commit
+                prev_commit = os.popen(f"cd {REPO_DIR} && git rev-parse HEAD").read().strip()
+                log(f"[SCRIPT] Current commit: {prev_commit}", buffer)
+
+                # Step 2: Pull update
+                if os.system(f"cd {REPO_DIR} && git pull") != 0:
                     log("[SCRIPT] Git pull failed", buffer)
                     return
-        
+
                 log("[SCRIPT] Git pull success", buffer)
-        
-                # Step 2: Install dependencies
-                result = os.system(
-                    f"{VENV_PYTHON} -m pip install -r {REPO_DIR}/requirements.txt"
-                )
-        
-                if result != 0:
+
+                # Step 3: Install dependencies
+                if os.system(f"{VENV_PYTHON} -m pip install -r {REPO_DIR}/requirements.txt") != 0:
                     log("[SCRIPT] Dependency install failed", buffer)
                     return
-        
+
                 log("[SCRIPT] Dependencies updated", buffer)
-        
-                # Step 3: Restart via systemd
+
+                # Step 4: Syntax check
+                if os.system(f"{VENV_PYTHON} -m py_compile {SCRIPT_PATH}") != 0:
+                    log("[SCRIPT] Syntax check FAILED → rolling back", buffer)
+
+                    os.system(f"cd {REPO_DIR} && git reset --hard {prev_commit}")
+                    log("[SCRIPT] Rollback complete", buffer)
+                    return
+
+                log("[SCRIPT] Syntax check passed", buffer)
+
+                # Step 5: Restart
                 log("[SCRIPT] Restarting via systemd...", buffer)
-        
                 os._exit(0)
-        
+
             except Exception as e:
                 log(f"[SCRIPT ERROR] {e}", buffer)
 
         case "Restart_Script":
             log("[SCRIPT] Restarting script", buffer)
             os._exit(0)
+
         case "Recv_Satellite_IP":
             if data:
                 set_satellite_ip(data[0])
