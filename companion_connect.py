@@ -255,30 +255,29 @@ def osc_handler(address, *args):
 
     raw = args[0]
 
+    # sanitize the raw string: replace spaces with underscores
+    raw_sanitized = raw.replace(" ", "_")
+
     try:
-        # replace spaces with underscores
-        sanitized = raw.replace(" ", "_")
-        
         # parse the JSON string
-        parsed = json.loads(sanitized)
-        
-        # minimal validation
-        if len(parsed) < 2:
-            log("[OSC ERROR] Parsed data too short")
-            return
-
-        sender = parsed[0]
-        command = parsed[1]
-        data = parsed[2:] if len(parsed) > 2 else []
-
-        buffer = []
-
-        receive(sender, command, data, buffer)
-        dispatch_logs(sender, buffer)
-
+        parsed = json.loads(raw_sanitized)
     except Exception as e:
-        log(f"[OSC PARSE ERROR] {raw} → {e}")
+        log(f"[OSC PARSE ERROR] Invalid JSON: {raw} → {e}")
+        return
 
+    # minimal validation
+    if not isinstance(parsed, list) or len(parsed) < 2:
+        log(f"[OSC ERROR] Invalid format after parsing: {parsed}")
+        return
+
+    sender = parsed[0]
+    command = parsed[1]
+    data = parsed[2:] if len(parsed) > 2 else []
+
+    # call receive OUTSIDE the try block to allow things like os._exit() to propagate
+    buffer = []
+    receive(sender, command, data, buffer)
+    dispatch_logs(sender, buffer)
 
 def start_osc_server():
     dispatcher = Dispatcher()
