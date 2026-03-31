@@ -118,10 +118,6 @@ def receive(sender, command, data, buffer):
             except Exception as e:
                 log(f"[SCRIPT ERROR] {e}", buffer)
 
-        case "Restart Script":
-            log("[SCRIPT] Restarting script", buffer)
-            os._exit(0)
-
         case "Recv Satellite IP":
             if data:
                 set_satellite_ip(data[0])
