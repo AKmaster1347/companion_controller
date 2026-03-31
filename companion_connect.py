@@ -11,7 +11,7 @@ from pythonosc.osc_server import ThreadingOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
 
 # ---------------- USER CONFIG ----------------
-companion_hostname_list = ["Aspire14.local", "Lighting.local"]
+companion_hostname_list = ["Lighting.local","Aspire14.local"]
 
 osc_port = 7777
 
@@ -246,6 +246,7 @@ def dispatch_logs(sender, buffer):
 
 
 def osc_handler(address, *args):
+    log("[OSC STATUS] OSC command recieved"+address)
     if address != receive_path:
         log("[OSC ERROR] Incorrect path")
         return
