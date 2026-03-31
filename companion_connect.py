@@ -246,9 +246,7 @@ def dispatch_logs(sender, buffer):
 
 
 def osc_handler(address, *args):
-    log("[OSC STATUS] OSC command recieved"+address)
     if address != receive_path:
-        log("[OSC ERROR] Incorrect path")
         return
 
     if not args:
@@ -258,10 +256,15 @@ def osc_handler(address, *args):
     raw = args[0]
 
     try:
-        parsed = json.loads(raw) if isinstance(raw, str) else raw
-
-        if not isinstance(parsed, list) or len(parsed) < 2:
-            log("[OSC ERROR] Invalid format")
+        # replace spaces with underscores
+        sanitized = raw.replace(" ", "_")
+        
+        # parse the JSON string
+        parsed = json.loads(sanitized)
+        
+        # minimal validation
+        if len(parsed) < 2:
+            log("[OSC ERROR] Parsed data too short")
             return
 
         sender = parsed[0]
@@ -271,11 +274,10 @@ def osc_handler(address, *args):
         buffer = []
 
         receive(sender, command, data, buffer)
-
         dispatch_logs(sender, buffer)
 
     except Exception as e:
-        log(f"[OSC PARSE ERROR] {raw} {e}")
+        log(f"[OSC PARSE ERROR] {raw} → {e}")
 
 
 def start_osc_server():
