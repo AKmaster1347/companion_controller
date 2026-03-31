@@ -44,7 +44,7 @@ def receive(sender, command, data, buffer):
 
     match command:
 
-        case "Send_Ping":
+        case "Send Ping":
             send([pi_name, local_ip])
 
         case "Send_Connection_Status":
@@ -55,23 +55,23 @@ def receive(sender, command, data, buffer):
                 str(check_satellite_connectivity())
             ])
 
-        case "Send_Hostname_List":
+        case "Send Hostname List":
             send(["Hostnames", companion_hostname_list])
 
-        case "Set_Host":
+        case "Set Host":
             if data:
                 new_host = data[0]
                 log(f"[CMD] Setting host → {new_host}", buffer)
                 set_satellite_ip(new_host)
 
-        case "Get_Host":
+        case "Get Host":
             send(["Host", get_satellite_ip()])
 
-        case "Recv_Reboot_Satellite":
+        case "Recv Reboot Satellite":
             log("[SAT] Restarting satellite service", buffer)
             os.system("sudo systemctl restart companion-satellite")
 
-        case "Send_System_Stats":
+        case "Send System Stats":
             stats = {
                 "cpu": psutil.cpu_percent(),
                 "memory": psutil.virtual_memory().percent,
@@ -79,7 +79,7 @@ def receive(sender, command, data, buffer):
             }
             send(["System_Stats", stats])
 
-        case "Update_Script":
+        case "Update Script":
             log("[SCRIPT] Starting safe update...", buffer)
 
             try:
@@ -118,23 +118,23 @@ def receive(sender, command, data, buffer):
             except Exception as e:
                 log(f"[SCRIPT ERROR] {e}", buffer)
 
-        case "Restart_Script":
+        case "Restart Script":
             log("[SCRIPT] Restarting script", buffer)
             os._exit(0)
 
-        case "Recv_Satellite_IP":
+        case "Recv Satellite IP":
             if data:
                 set_satellite_ip(data[0])
 
-        case "Recv_System_Shutdown":
+        case "Recv System_Shutdown":
             log("[SYSTEM] Shutdown command received", buffer)
             os.system("sudo shutdown now")
 
-        case "Recv_Reboot":
+        case "Recv Reboot":
             log("[SYSTEM] Reboot command received", buffer)
             os.system("sudo reboot")
 
-        case "Recv_Script_Shutdown":
+        case "Recv Script Shutdown":
             log("[SYSTEM] Script shutdown", buffer)
             os._exit(0)
 
