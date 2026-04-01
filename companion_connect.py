@@ -165,22 +165,20 @@ def main():
 
     threading.Thread(target=start_osc_server, daemon=True).start()
     
-    resolve_companion_hostname()
+    resolve_hostname_list()
 
     log("[MAIN] System ready")
 
     while True:
-        if not companion_host_ip:
-            return
         try:
-            socket.create_connection((companion_network_address, 16622), timeout=3)
+            socket.create_connection((companion_host_ip, 16622), timeout=3)
         except:
             log("[NETWORK] Lost connection, re-resolving same host")
             try:
                 resolve_hostname(companion_host_name)
-        except:
-            log("[HEAL] Failed to re-resolve host")
-            continue
+            except:
+                log("[NETWORK] Failed to re-resolve host")
+                continue
         time.sleep(60)
 # -----------------------------------------
 
@@ -194,16 +192,13 @@ def get_client(ip):
     return clients[ip]
 
 
-def log(message, buffer=None):
+def log(message):
     print(message)
 
-    log_buffer.append(message)
-    if len(log_buffer) > MAX_LOGS:
-        log_buffer.pop(0)
-
-    if buffer is not None:
-        buffer.append(message)
-
+    log_main.append(message)
+    log_command.append(message)
+    if len(log_main) > MAX_LOGS:
+        log_main.pop(0)
 
 def send(data):
     try:
@@ -348,39 +343,33 @@ def check_satellite_connectivity():
 
 
 # ---------------- NETWORK ----------------
-def get_local_hostname():
-    """Retrieves the system's hostname using the socket module."""
-    try:
-        hostname = socket.gethostname()
-        return hostname
-    except socket.error as e:
-        return f"Error getting hostname: {e}"
-
-def get_local_ip():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except:
-        return None
-
+# def get_local_hostname():
+#     """Retrieves the system's hostname using the socket module."""
+#     try:
+#         hostname = socket.gethostname()
+#         return hostname
+#     except socket.error as e:
+#         return f"Error getting hostname: {e}"
 
 def wait_for_wifi():
     log("[NETWORK] Waiting for WiFi...")
     while True:
-        ip = get_local_ip()
-        if ip:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+            s.close()
             log(f"[NETWORK] Connected: {ip}")
             return ip
-        time.sleep(2)
+        except:
+            time.sleep(1)
 
 def convert_hostname(hostname):
     try:
         return socket.gethostbyname(hostname)
     except:
         log(f"[NETWORK] Failed to resolve hostname {hostname}")
+        return None
 
 def resolve_hostname(hostname):
      try:
@@ -390,7 +379,7 @@ def resolve_hostname(hostname):
     except:
         log(f"[NETWORK] Failed to resolve hostname {hostname}")
             
-def resolve_hostname_list():
+def cycle_hostname_list():
     global companion_host_name, companion_host_ip
     log("[NETWORK] Resolving hostnames...")
 
