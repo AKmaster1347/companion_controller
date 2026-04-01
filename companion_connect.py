@@ -57,20 +57,17 @@ def receive(sender, command, data):
             send([
                 "Recv RaspberryPi Connection Status",
                 pi_name,
-                companion_network_address,
+                companion_host_ip,
                 get_satellite_ip(),
                 str(check_satellite_connectivity())
             ])
 
         case "Send Hostname List":
-            log(f"[OSC SEND CMD] Sending hostname list to {companion_host}")
+            log(f"[OSC SEND CMD] Sending hostname list to {companion_host} ({companion_host_ip})")
             send(["Recv RaspberryPi Hostname List", pi_name, companion_hostname_list])
-       
-        case "Send Companion Host":
-            send(["Host", get_satellite_ip()])
 
-
-        case "Send System Stats":
+        case "Send System Status":
+            log(f"[OSC SEND CMD] Sending system status to {companion_host} ({companion_host_ip})")
             stats = {
                 "cpu": psutil.cpu_percent(),
                 "memory": psutil.virtual_memory().percent,
@@ -86,7 +83,7 @@ def receive(sender, command, data):
                 set_satellite_ip(new_host)
     
         case "Recv Reboot Satellite":
-            log("[SAT] Restarting satellite service")
+            log("[OSC RECV CMD] Restarting satellite service")
             os.system("sudo systemctl restart companion-satellite")
         
         case "Recv Script Update":
