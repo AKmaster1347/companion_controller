@@ -75,20 +75,17 @@ def receive(sender, command, data):
                 "memory": psutil.virtual_memory().percent,
                 "uptime": time.time() - psutil.boot_time()
             }
-            send(["System_Stats", stats])
+            send(["System Stats", stats])
 
         # Recieve commands
-        case "Recv Set Host":
+        case "Recv Set Hostname":
             if data:
                 new_host = data[0]
                 log(f"[OSC RECV CMD] Setting host → {new_host}")
-                companion_host_name = new_host
-                re
-                set_satellite_ip(new_host)
+                set_hostname(new_host)
             else:
                 log(f"[ERROR] Missing required data: {data}")
 
-    
         case "Recv Satellite Reboot":
             log("[OSC RECV CMD] Restarting satellite service")
             os.system("sudo systemctl restart companion-satellite")
@@ -127,17 +124,10 @@ def receive(sender, command, data):
 
                 # Step 5: Restart
                 log("[SCRIPT] Restarting via systemd...")
-                os._exit(0)
+                os.exit(0)
 
             except Exception as e:
                 log(f"[SCRIPT ERROR] {e}")
-
-        case "Recv Satellite IP":
-            if data:
-                log(f"[RECV OSC CMD] Set satellite ip")
-                set_satellite_ip(data[0])
-            else:
-                log(f"[ERROR] Missing required data: {data}")
 
         case "Recv System Shutdown":
             log("[RECV OSC CMD] System shutting down")
@@ -149,7 +139,7 @@ def receive(sender, command, data):
 
         case "Recv Script Shutdown":
             log("[RECV OSC CMD] Script shutting down")
-            os._exit(0)
+            os.exit(0)
 
         case _:
             log(f"[OSC CMD] Unknown command: {command}")
@@ -165,7 +155,7 @@ def main():
 
     threading.Thread(target=start_osc_server, daemon=True).start()
     
-    resolve_hostname_list()
+    companion_connect()
 
     log("[MAIN] System ready")
 
@@ -175,7 +165,7 @@ def main():
         except:
             log("[NETWORK] Lost connection, re-resolving same host")
             try:
-                resolve_hostname(companion_host_name)
+                set_hostname(companion_host_name)
             except:
                 log("[NETWORK] Failed to re-resolve host")
                 continue
@@ -187,6 +177,9 @@ def main():
 # ---------------- OSC----------------
 
 def get_client(ip):
+    if not ip:
+        log("[ERROR] No companion host IP set")
+        return
     if ip not in clients:
         clients[ip] = SimpleUDPClient(ip, osc_port)
     return clients[ip]
@@ -228,11 +221,11 @@ def dispatch_logs(sender, buffer):
         targets.add(sender_ip)
     else:
         # fallback ONLY to current host
-        if companion_network_address:
-            targets.add(companion_network_address)
+        if companion_host_ip:
+            targets.add(companion_host_ip)
 
-    if companion_network_address:
-        targets.add(companion_network_address)
+    if companion_host_ip:
+        targets.add(companion_host_ip)
 
     for target in targets:
         try:
@@ -247,7 +240,7 @@ def dispatch_logs(sender, buffer):
                 ])
             )
 
-            if target == companion_network_address and sender_ip != companion_network_address:
+            if target == companion_host_ip and sender_ip != companion_host_ip:
                 client.send_message(
                     send_path,
                     json.dumps([
@@ -270,7 +263,7 @@ def osc_handler(address, *args):
         return
     
     global log_command
-    log_comnmand = ["Recv RaspberryPi Logs"]
+    log_command = ["Recv RaspberryPi Logs"]
     
     command_data = args[0]
     log(f"[OSC] Raw command data {command_data}")
@@ -291,9 +284,9 @@ def osc_handler(address, *args):
     command = parsed[1]
     data = parsed[2:] if len(parsed) > 2 else []
 
-    # call receive OUTSIDE the try block so os._exit() works
+    # call receive OUTSIDE the try block so os.exit() works
     buffer = []
-    receive(sender, command, data, buffer)
+    receive(sender, command, data)
     send(log_command)
 
 def start_osc_server():
@@ -328,10 +321,10 @@ def set_satellite_ip(ip):
 
 def check_satellite_connectivity():
     try:
-        if get_satellite_ip() != companion_network_address:
+        if get_satellite_ip() != companion_host_ip:
             return False
 
-        sock = socket.create_connection((companion_network_address, 16622), timeout=5)
+        sock = socket.create_connection((companion_host_ip, 16622), timeout=5)
         sock.close()
 
         return True
@@ -369,7 +362,8 @@ def convert_hostname(hostname):
         log(f"[NETWORK] Failed to resolve hostname {hostname}")
         return None
 
-def resolve_hostname(hostname):
+def set_hostname(hostname):
+     global companion_host_ip, companion_host_name
      try:
         companion_host_ip = socket.gethostbyname(hostname)
         companion_host_name = hostname
@@ -377,7 +371,7 @@ def resolve_hostname(hostname):
     except:
         log(f"[NETWORK] Failed to resolve hostname {hostname}")
             
-def cycle_hostname_list():
+def companion_connect():
     global companion_host_name, companion_host_ip
     log("[NETWORK] Resolving hostnames...")
 
