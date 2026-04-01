@@ -11,7 +11,7 @@ from pythonosc.osc_server import ThreadingOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
 
 # ---------------- USER CONFIG ----------------
-companion_hostname_list = ["Aspire14.local", "Skybox-Lighting.local", "Chapel.local"]
+companion_hostname_list = ["Aspire14.local", "Skybox-Lighting.local", "Cave-Video-Switcher.local", "Chapel.local"]
 
 osc_port = 7777
 
@@ -268,25 +268,23 @@ def osc_handler(address, *args):
     if not args:
         log("[OSC ERROR] No data received")
         return
-
-    raw = args[0]
-    print(f"Raw input: {raw}")
-
-    # remove first and last character
-    ## raw_trimmed = raw[1:-1] if len(raw) > 2 else raw
-    raw_trimmed = raw
-    print(f"Trimmed input: {raw_trimmed}")
+    
+    global log_command
+    log_comnmand = ["Recv RaspberryPi Logs"]
+    
+    command_data = args[0]
+    log(f"[OSC] Raw command data {command_data}")
 
     try:
         # parse the JSON string
-        parsed = json.loads(raw_trimmed)
+        parsed = json.loads(command_data)
     except Exception as e:
-        log(f"[OSC PARSE ERROR] Invalid JSON: {raw_trimmed} → {e}")
+        log(f"[ERROR] Invalid command data JSON: {command_data} → {e}")
         return
 
     # minimal validation
     if not isinstance(parsed, list) or len(parsed) < 2:
-        log(f"[OSC ERROR] Invalid format after parsing: {parsed}")
+        log(f"[ERROR] Invalid command data format after parsing: {parsed}")
         return
 
     sender = parsed[0]
@@ -296,7 +294,7 @@ def osc_handler(address, *args):
     # call receive OUTSIDE the try block so os._exit() works
     buffer = []
     receive(sender, command, data, buffer)
-    dispatch_logs(sender, buffer)
+    send(log_command)
 
 def start_osc_server():
     dispatcher = Dispatcher()
