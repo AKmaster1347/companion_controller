@@ -165,9 +165,7 @@ def main():
 
     threading.Thread(target=start_osc_server, daemon=True).start()
     
-    companion_host_ip = resolve_companion_hostname()
-
-    #set_satellite_ip(companion_host_ip)
+    resolve_companion_hostname()
 
     log("[MAIN] System ready")
 
@@ -350,7 +348,7 @@ def check_satellite_connectivity():
 
 
 # ---------------- NETWORK ----------------
-def get_hostname_socket():
+def get_local_hostname():
     """Retrieves the system's hostname using the socket module."""
     try:
         hostname = socket.gethostname()
@@ -377,6 +375,12 @@ def wait_for_wifi():
             log(f"[NETWORK] Connected: {ip}")
             return ip
         time.sleep(2)
+
+def convert_hostname(hostname):
+    try:
+        return socket.gethostbyname(hostname)
+    except:
+        log(f"[NETWORK] Failed to resolve hostname {hostname}")
 
 def resolve_hostname(hostname):
      try:
