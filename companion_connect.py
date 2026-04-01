@@ -11,7 +11,7 @@ from pythonosc.osc_server import ThreadingOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
 
 # ---------------- USER CONFIG ----------------
-companion_hostname_list = ["Aspire14.local","Chapel.local"]
+companion_hostname_list = ["Aspire14.local", "Skybox-Lighting.local", "Chapel.local"]
 
 osc_port = 7777
 
@@ -33,6 +33,8 @@ SCRIPT_PATH = f"{REPO_DIR}/companion_connect.py"
 
 companion_host_name = None
 companion_host_ip = None
+companion_sender_host_name = None
+companion_sender_host_ip = None
 local_ip = None
 satellite_api = "http://127.0.0.1:9999/api"
 
@@ -49,11 +51,11 @@ def receive(sender, command, data):
     match command:
         # Send commands
         case "Send Ping":
-            log(f"[OSC SEND CMD] Sending ping to {companion_host_name} ({companion_host_ip})")
+            log(f"[OSC SEND CMD] Sending ping")
             send(["Recv RaspberryPi Ping", pi_name, local_ip])
 
         case "Send Connection Status":
-            log(f"[OSC SEND CMD] Sending connection status to {companion_host} ({companion_host_ip})")
+            log(f"[OSC SEND CMD] Sending connection status")
             send([
                 "Recv RaspberryPi Connection Status",
                 pi_name,
@@ -63,11 +65,11 @@ def receive(sender, command, data):
             ])
 
         case "Send Hostname List":
-            log(f"[OSC SEND CMD] Sending hostname list to {companion_host} ({companion_host_ip})")
+            log(f"[OSC SEND CMD] Sending hostname list")
             send(["Recv RaspberryPi Hostname List", pi_name, companion_hostname_list])
 
         case "Send System Status":
-            log(f"[OSC SEND CMD] Sending system status to {companion_host} ({companion_host_ip})")
+            log(f"[OSC SEND CMD] Sending system status")
             stats = {
                 "cpu": psutil.cpu_percent(),
                 "memory": psutil.virtual_memory().percent,
@@ -80,89 +82,107 @@ def receive(sender, command, data):
             if data:
                 new_host = data[0]
                 log(f"[OSC RECV CMD] Setting host → {new_host}")
+                companion_host_name = new_host
+                re
                 set_satellite_ip(new_host)
+            else:
+                log(f"[ERROR] Missing required data: {data}")
+
     
-        case "Recv Reboot Satellite":
+        case "Recv Satellite Reboot":
             log("[OSC RECV CMD] Restarting satellite service")
             os.system("sudo systemctl restart companion-satellite")
         
         case "Recv Script Update":
-            log("[SCRIPT] Starting safe update...", buffer)
+            log("[OSC RECV CMD] Updating script")
 
             try:
                 # Step 1: Get current commit
                 prev_commit = os.popen(f"cd {REPO_DIR} && git rev-parse HEAD").read().strip()
-                log(f"[SCRIPT] Current commit: {prev_commit}", buffer)
+                log(f"[SCRIPT] Current commit: {prev_commit}")
 
                 # Step 2: Pull update
                 if os.system(f"cd {REPO_DIR} && git pull") != 0:
-                    log("[SCRIPT] Git pull failed", buffer)
+                    log("[SCRIPT] Git pull failed")
                     return
 
-                log("[SCRIPT] Git pull success", buffer)
+                log("[SCRIPT] Git pull success")
 
                 # Step 3: Install dependencies
                 if os.system(f"{VENV_PYTHON} -m pip install -r {REPO_DIR}/requirements.txt") != 0:
-                    log("[SCRIPT] Dependency install failed", buffer)
+                    log("[SCRIPT] Dependency install failed")
                     return
 
-                log("[SCRIPT] Dependencies updated", buffer)
+                log("[SCRIPT] Dependencies updated")
 
                 # Step 4: Syntax check
                 if os.system(f"{VENV_PYTHON} -m py_compile {SCRIPT_PATH}") != 0:
-                    log("[SCRIPT] Syntax check FAILED → rolling back", buffer)
+                    log("[SCRIPT] Syntax check FAILED → rolling back")
 
                     os.system(f"cd {REPO_DIR} && git reset --hard {prev_commit}")
-                    log("[SCRIPT] Rollback complete", buffer)
+                    log("[SCRIPT] Rollback complete")
                     return
 
-                log("[SCRIPT] Syntax check passed", buffer)
+                log("[SCRIPT] Syntax check passed")
 
                 # Step 5: Restart
-                log("[SCRIPT] Restarting via systemd...", buffer)
+                log("[SCRIPT] Restarting via systemd...")
                 os._exit(0)
 
             except Exception as e:
-                log(f"[SCRIPT ERROR] {e}", buffer)
+                log(f"[SCRIPT ERROR] {e}")
 
         case "Recv Satellite IP":
             if data:
+                log(f"[RECV OSC CMD] Set satellite ip")
                 set_satellite_ip(data[0])
+            else:
+                log(f"[ERROR] Missing required data: {data}")
 
         case "Recv System Shutdown":
-            log("[SYSTEM] System shuting down", buffer)
+            log("[RECV OSC CMD] System shutting down")
             os.system("sudo shutdown now")
 
         case "Recv System Reboot":
-            log("[SYSTEM] System rebooting", buffer)
+            log("[RECV OSC CMD] System rebooting")
             os.system("sudo reboot")
 
         case "Recv Script Shutdown":
-            log("[SYSTEM] Script shuting down", buffer)
+            log("[RECV OSC CMD] Script shutting down")
             os._exit(0)
 
         case _:
-            log(f"[OSC] Unknown command: {command}", buffer)
+            log(f"[OSC CMD] Unknown command: {command}")
 # -----------------------------------------
 
 
 
 # ---------------- MAIN ----------------
 def main():
-    global local_ip, companion_network_address
+    global local_ip, companion_host_ip
 
     local_ip = wait_for_wifi()
 
-    companion_network_address = resolve_companion_hostname()
-
     threading.Thread(target=start_osc_server, daemon=True).start()
+    
+    companion_host_ip = resolve_companion_hostname()
 
-    set_satellite_ip(companion_network_address)
+    #set_satellite_ip(companion_host_ip)
 
     log("[MAIN] System ready")
 
     while True:
-        self_heal_connection()
+        if not companion_host_ip:
+            return
+        try:
+            socket.create_connection((companion_network_address, 16622), timeout=3)
+        except:
+            log("[NETWORK] Lost connection, re-resolving same host")
+            try:
+                resolve_hostname(companion_host_name)
+        except:
+            log("[HEAL] Failed to re-resolve host")
+            continue
         time.sleep(60)
 # -----------------------------------------
 
@@ -358,8 +378,16 @@ def wait_for_wifi():
             return ip
         time.sleep(2)
 
-
-def resolve_companion_hostname():
+def resolve_hostname(hostname):
+     try:
+        companion_host_ip = socket.gethostbyname(hostname)
+        companion_host_name = hostname
+        set_satellite_ip(companion_host_ip)
+    except:
+        log(f"[NETWORK] Failed to resolve hostname {hostname}")
+            
+def resolve_hostname_list():
+    global companion_host_name, companion_host_ip
     log("[NETWORK] Resolving hostnames...")
 
     while True:
@@ -377,7 +405,9 @@ def resolve_companion_hostname():
                     pass
 
                 log(f"[NETWORK] Resolved {host} → {ip}")
-                return ip
+                companion_host_name = host
+                companion_host_ip = ip
+                return
 
             except:
                 try:
@@ -388,27 +418,10 @@ def resolve_companion_hostname():
                 except:
                     pass
 
-                log(f"[NETWORK] Failed: {host}")
+                log(f"[NETWORK] Failed to resolve: {host}")
 
         log("[NETWORK] Retrying hostname cycle...")
 
-
-def self_heal_connection():
-    global companion_network_address
-
-    if not companion_network_address:
-        return
-
-    try:
-        socket.create_connection((companion_network_address, 16622), timeout=3)
-    except:
-        log("[HEAL] Lost connection, re-resolving same host")
-
-        try:
-            companion_network_address = socket.gethostbyname(companion_network_address)
-            set_satellite_ip(companion_network_address)
-        except:
-            log("[HEAL] Failed to re-resolve host")
 # -----------------------------------------
 
 
