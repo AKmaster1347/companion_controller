@@ -175,8 +175,6 @@ def osc_handler(address, *args):
     data = parsed[2:] if len(parsed) > 2 else []
 
     receive(command, data)
-    log(f"[companion] cmd triggered: {companion_sender_host_ip}")
-
     send(log_command, companion_sender_host_ip)
     if(companion_sender_host_ip != companion_host_ip):
         log_command[0] = "Recv External RaspberryPi Logs"
@@ -228,7 +226,11 @@ def log(message):
     if len(log_main) > MAX_LOGS:
         log_main.pop(0)
 
-def send(data, send_ip = companion_sender_host_ip):
+def send(data, send_ip = None):
+    # If no IP is provided, use the global/constant one
+    if send_ip is None:
+        send_ip = companion_sender_host_ip
+        
     try:
         client = get_client(send_ip)
         client.send_message(send_path, json.dumps(data))
