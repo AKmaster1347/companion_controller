@@ -46,7 +46,7 @@ clients = {}
 
 # ---------------- MAIN FUNCTIONS ----------------
 def receive(command, data):
-    log(f"[OSC RECEIVE] {command} from {companion_sender_host_name} with data {data}")
+    log(f"[OSC RECEIVE] '{command}' command recieved from '{companion_sender_host_name}' with data '{data}'")
 
     match command:
         # Send commands
@@ -184,10 +184,10 @@ def main():
     global local_ip, companion_host_ip
 
     local_ip = wait_for_wifi()
-
-    threading.Thread(target=start_osc_server, daemon=True).start()
     
     companion_connect()
+
+    threading.Thread(target=start_osc_server, daemon=True).start()
 
     log("[MAIN] System ready")
 
