@@ -178,7 +178,7 @@ def osc_handler(address, *args):
     send(log_command)
     if(companion_sender_host_ip != companion_host_ip):
         log_command[0] = "Recv External RaspberryPi Logs"
-        log(companion_host_ip)
+        log(f"[EXTERNAL] cmd triggered: {companion_host_ip}")
         send(log_command,companion_host_ip)
 
 def main():
@@ -232,7 +232,7 @@ def send(data, send_ip = companion_sender_host_ip):
         client.send_message(send_path, json.dumps(data))
         log(f"[OSC SEND] {data}")
     except Exception as e:
-        log(f"[ERROR] Sending error: {e}")
+        log(f"[ERROR] Failed to send data to '{send_ip}' error: {e}")
 
 
 def start_osc_server():
