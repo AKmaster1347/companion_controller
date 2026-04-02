@@ -124,7 +124,7 @@ def receive(command, data):
 
                 # Step 5: Restart
                 log("[SCRIPT] Restarting via systemd...")
-                sys.exit(0)
+                os._exit(0)
 
             except Exception as e:
                 log(f"[SCRIPT ERROR] {e}")
@@ -139,7 +139,7 @@ def receive(command, data):
 
         case "Recv Script Shutdown":
             log("[RECV OSC CMD] Script shutting down")
-            sys.exit(0)
+            os._exit(0)
 
         case _:
             log(f"[OSC CMD] Unknown command: {command}")
@@ -210,7 +210,7 @@ def main():
 
 def get_client(ip):
     if not ip:
-        log("[ERROR] No companion host IP set")
+        log("[ERROR] Cannot get client from invalid ip")
         return
     if ip not in clients:
         clients[ip] = SimpleUDPClient(ip, osc_port)
