@@ -9,7 +9,7 @@ import psutil
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import ThreadingOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
-
+# TODO: create log buffer or something, since osc gets started before add checks to make sure things dont break when companion_host_name/_ip is None
 # ---------------- USER CONFIG ----------------
 companion_hostname_list = ["Aspire14.local", "Skybox-Lighting.local", "Cave-Video-Switcher.local", "Chapel.local"]
 
@@ -45,8 +45,8 @@ clients = {}
 
 
 # ---------------- MAIN FUNCTIONS ----------------
-def receive(sender, command, data):
-    log(f"[OSC RECEIVE] {command} from {sender} with data {data}")
+def receive(command, data):
+    log(f"[OSC RECEIVE] {command} from {companion_sender_host_name} with data {data}")
 
     match command:
         # Send commands
@@ -174,7 +174,7 @@ def osc_handler(address, *args):
     command = parsed[1]
     data = parsed[2:] if len(parsed) > 2 else []
 
-    receive(sender, command, data)
+    receive(command, data)
     send(log_command)
     if(companion_sender_host_ip != companion_host_ip):
         log_command[0] = "Recv External RaspberryPi Logs"
@@ -233,12 +233,6 @@ def send(data, send_ip = companion_sender_host_ip):
     except Exception as e:
         log(f"[ERROR] Sending error: {e}")
 
-
-def convert_hostname(sender):
-    try:
-        return socket.gethostbyname(sender)
-    except:
-        return None
 
 def start_osc_server():
     dispatcher = Dispatcher()
@@ -312,7 +306,7 @@ def convert_hostname(hostname):
     try:
         return socket.gethostbyname(hostname)
     except:
-        log(f"[NETWORK] Failed to resolve hostname {hostname}")
+        log(f"[ERROR] Failed to resolve hostname {hostname}")
         return None
 
 def set_hostname(hostname):
