@@ -178,6 +178,7 @@ def osc_handler(address, *args):
     send(log_command)
     if(companion_sender_host_ip != companion_host_ip):
         log_command[0] = "Recv External RaspberryPi Logs"
+        log(companion_host_ip)
         send(log_command,companion_host_ip)
 
 def main():
@@ -298,7 +299,7 @@ def wait_for_wifi():
 def convert_hostname(hostname):
     try:
         ip = socket.gethostbyname(hostname)
-        log(f"[NETWORK] Resolve hostname '{hostname}' to ip '{ip}'")
+        log(f"[NETWORK] Resolved hostname '{hostname}' to ip '{ip}'")
         return ip
     except:
         log(f"[ERROR] Failed to resolve hostname {hostname}")
