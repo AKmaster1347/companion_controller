@@ -310,8 +310,8 @@ def convert_hostname(hostname):
         return None
 
 def set_hostname(hostname):
-     global companion_host_ip, companion_host_name
-     try:
+    global companion_host_ip, companion_host_name
+    try:
         companion_host_ip = socket.gethostbyname(hostname)
         companion_host_name = hostname
         set_satellite_ip(companion_host_ip)
