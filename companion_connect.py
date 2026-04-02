@@ -46,7 +46,7 @@ clients = {}
 
 # ---------------- MAIN FUNCTIONS ----------------
 def receive(command, data):
-    log(f"[OSC RECEIVE] '{command}' command recieved from '{companion_sender_host_name}' with data '{data}'")
+    log(f"[OSC RECEIVE] '{command}' command recieved from '{companion_sender_host_name} ({companion_sender_host_ip})' with data '{data}'")
 
     match command:
         # Send commands
