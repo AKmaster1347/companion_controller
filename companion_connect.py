@@ -9,7 +9,7 @@ import psutil
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import ThreadingOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
-# TODO: create log buffer or something, since osc gets started before add checks to make sure things dont break when companion_host_name/_ip is None
+# TODO: create log buffer or something, since osc gets started before add checks to make sure things dont break when companion_host_name/_ip is None, add a variable to detect when sytstem needs to be shut down and execute it after sending external logs
 # ---------------- USER CONFIG ----------------
 companion_hostname_list = ["Aspire14.local", "Skybox-Lighting.local", "Cave-Video-Switcher.local", "Chapel.local"]
 
