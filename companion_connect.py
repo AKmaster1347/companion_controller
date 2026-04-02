@@ -27,7 +27,7 @@ VENV_PYTHON = "/home/tech-ministry/companion-env/bin/python"
 
 
 # ---------------- RUNTIME VARIABLES ----------------
-SCRIPT_VERSION = 1.0
+SCRIPT_VERSION = 1.1
 
 SCRIPT_PATH = f"{REPO_DIR}/companion_connect.py"
 
