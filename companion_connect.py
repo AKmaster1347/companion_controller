@@ -281,13 +281,6 @@ def check_satellite_connectivity():
 
 
 # ---------------- NETWORK ----------------
-# def get_local_hostname():
-#     """Retrieves the system's hostname using the socket module."""
-#     try:
-#         hostname = socket.gethostname()
-#         return hostname
-#     except socket.error as e:
-#         return f"Error getting hostname: {e}"
 
 def wait_for_wifi():
     log("[NETWORK] Waiting for WiFi...")
