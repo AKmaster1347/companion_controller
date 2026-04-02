@@ -85,7 +85,7 @@ def receive(command, data):
                 set_hostname(new_host)
             else:
                 log(f"[ERROR] Missing required data: {data}")
-
+#not functional, no such thinkg as companion_satellite.service
         case "Recv Satellite Reboot":
             log("[OSC RECV CMD] Restarting satellite service")
             os.system("sudo systemctl restart companion-satellite")
