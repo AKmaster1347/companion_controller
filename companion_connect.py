@@ -210,7 +210,7 @@ def main():
 
 def get_client(ip):
     if not ip:
-        log("[ERROR] Cannot get client from invalid ip")
+        log(f"[ERROR] Cannot get client from invalid ip '{ip}'")
         return
     if ip not in clients:
         clients[ip] = SimpleUDPClient(ip, osc_port)
