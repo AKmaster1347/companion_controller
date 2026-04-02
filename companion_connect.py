@@ -297,7 +297,9 @@ def wait_for_wifi():
 
 def convert_hostname(hostname):
     try:
-        return socket.gethostbyname(hostname)
+        ip = socket.gethostbyname(hostname)
+        log(f"[NETWORK] Resolve hostname '{hostname}' to ip '{ip}'")
+        return ip
     except:
         log(f"[ERROR] Failed to resolve hostname {hostname}")
         return None
