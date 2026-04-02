@@ -44,7 +44,7 @@ clients = {}
 # --------------------------------------------------
 
 
-# ---------------- COMMANDS ----------------
+# ---------------- MAIN FUNCTIONS ----------------
 def receive(sender, command, data):
     log(f"[OSC RECEIVE] {command} from {sender} with data {data}")
 
@@ -124,7 +124,7 @@ def receive(sender, command, data):
 
                 # Step 5: Restart
                 log("[SCRIPT] Restarting via systemd...")
-                os.exit(0)
+                sys.exit(0)
 
             except Exception as e:
                 log(f"[SCRIPT ERROR] {e}")
@@ -139,15 +139,47 @@ def receive(sender, command, data):
 
         case "Recv Script Shutdown":
             log("[RECV OSC CMD] Script shutting down")
-            os.exit(0)
+            sys.exit(0)
 
         case _:
             log(f"[OSC CMD] Unknown command: {command}")
-# -----------------------------------------
 
+def osc_handler(address, *args):
+    if address != receive_path:
+        return
 
+    if not args:
+        log("[OSC ERROR] No data received")
+        return
+    
+    global log_command, companion_sender_host_name, companion_sender_host_ip
+    log_command = ["Recv RaspberryPi Logs"]
+    
+    command_data = args[0]
+    log(f"[OSC] Raw command data {command_data}")
 
-# ---------------- MAIN ----------------
+    try:
+        # parse the JSON string
+        parsed = json.loads(command_data)
+    except Exception as e:
+        log(f"[ERROR] Invalid command data JSON: {command_data} → {e}")
+        return
+
+    if not isinstance(parsed, list) or len(parsed) < 2:
+        log(f"[ERROR] Invalid command data format after parsing: {parsed}")
+        return
+
+    companion_sender_host_name = parsed[0]
+    companion_sender_host_ip = convert_hostname(companion_sender_host_name)
+    command = parsed[1]
+    data = parsed[2:] if len(parsed) > 2 else []
+
+    receive(sender, command, data)
+    send(log_command)
+    if(companion_sender_host_ip != companion_host_ip):
+        log_command[0] = "Recv External RaspberryPi Logs"
+        send(log_command,companion_host_ip)
+
 def main():
     global local_ip, companion_host_ip
 
@@ -193,101 +225,20 @@ def log(message):
     if len(log_main) > MAX_LOGS:
         log_main.pop(0)
 
-def send(data):
+def send(data, send_ip = companion_sender_host_ip):
     try:
-        client = get_client(companion_host_ip)
+        client = get_client(send_ip)
         client.send_message(send_path, json.dumps(data))
         log(f"[OSC SEND] {data}")
     except Exception as e:
         log(f"[ERROR] Sending error: {e}")
 
 
-def resolve_sender(sender):
+def convert_hostname(sender):
     try:
         return socket.gethostbyname(sender)
     except:
         return None
-
-
-def dispatch_logs(sender, buffer):
-    if not buffer:
-        return
-
-    sender_ip = resolve_sender(sender)
-
-    targets = set()
-
-    if sender_ip:
-        targets.add(sender_ip)
-    else:
-        # fallback ONLY to current host
-        if companion_host_ip:
-            targets.add(companion_host_ip)
-
-    if companion_host_ip:
-        targets.add(companion_host_ip)
-
-    for target in targets:
-        try:
-            client = get_client(target)
-
-            client.send_message(
-                send_path,
-                json.dumps([
-                    "Recv Raspberry Pi Logs",
-                    pi_name,
-                    ", ".join(buffer)
-                ])
-            )
-
-            if target == companion_host_ip and sender_ip != companion_host_ip:
-                client.send_message(
-                    send_path,
-                    json.dumps([
-                        "External Command Notice",
-                        pi_name,
-                        f"Command from {sender}"
-                    ])
-                )
-
-        except:
-            pass
-
-
-def osc_handler(address, *args):
-    if address != receive_path:
-        return
-
-    if not args:
-        log("[OSC ERROR] No data received")
-        return
-    
-    global log_command
-    log_command = ["Recv RaspberryPi Logs"]
-    
-    command_data = args[0]
-    log(f"[OSC] Raw command data {command_data}")
-
-    try:
-        # parse the JSON string
-        parsed = json.loads(command_data)
-    except Exception as e:
-        log(f"[ERROR] Invalid command data JSON: {command_data} → {e}")
-        return
-
-    # minimal validation
-    if not isinstance(parsed, list) or len(parsed) < 2:
-        log(f"[ERROR] Invalid command data format after parsing: {parsed}")
-        return
-
-    sender = parsed[0]
-    command = parsed[1]
-    data = parsed[2:] if len(parsed) > 2 else []
-
-    # call receive OUTSIDE the try block so os.exit() works
-    buffer = []
-    receive(sender, command, data)
-    send(log_command)
 
 def start_osc_server():
     dispatcher = Dispatcher()
@@ -314,7 +265,9 @@ def get_satellite_ip():
 def set_satellite_ip(ip):
     log(f"[SAT] Setting IP → {ip}")
     try:
-        requests.post(f"{satellite_api}/host", json={"host": ip}, timeout=5)
+        r = requests.post(f"{satellite_api}/host", json={"host": ip}, timeout=5)
+        if r.status_code != 200:
+            log(f"[SAT ERROR] Bad response: {r.status_code}")
     except Exception as e:
         log(f"[SAT ERROR] {e}")
 
