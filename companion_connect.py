@@ -160,7 +160,7 @@ def osc_handler(address, *args):
 
     try:
         # parse the JSON string
-        parsed = command_data.split("|")
+        parsed = command_data[1:-1].split("|")
         #parsed = json.loads(command_data)
         log(f"[OSC] Parsed data {str(parsed)}")
     except Exception as e:
