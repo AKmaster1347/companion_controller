@@ -162,6 +162,7 @@ def osc_handler(address, *args):
         # parse the JSON string
         parsed = command_data.split("|")
         #parsed = json.loads(command_data)
+        log(f"[OSC] Parsed data {str(parsed)}")
     except Exception as e:
         log(f"[ERROR] Invalid command data JSON: {command_data} → {e}")
         return
