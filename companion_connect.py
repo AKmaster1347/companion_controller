@@ -27,7 +27,7 @@ VENV_PYTHON = "/home/tech-ministry/companion-env/bin/python"
 
 
 # ---------------- RUNTIME VARIABLES ----------------
-SCRIPT_VERSION = 1.1
+SCRIPT_VERSION = 1.2
 
 SCRIPT_PATH = f"{REPO_DIR}/companion_connect.py"
 
@@ -52,7 +52,7 @@ def receive(command, data):
         # Send commands
         case "Send Ping":
             log(f"[OSC SEND CMD] Sending ping")
-            send(["Recv RaspberryPi Ping", pi_name, local_ip])
+            send(["Recv RaspberryPi Ping", pi_name, local_ip, SCRIPT_VERSION])
 
         case "Send Connection Status":
             log(f"[OSC SEND CMD] Sending connection status")
@@ -160,7 +160,8 @@ def osc_handler(address, *args):
 
     try:
         # parse the JSON string
-        parsed = json.loads(command_data)
+        parsed = command_data.split("|")
+        //parsed = json.loads(command_data)
     except Exception as e:
         log(f"[ERROR] Invalid command data JSON: {command_data} → {e}")
         return
