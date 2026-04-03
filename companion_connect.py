@@ -177,11 +177,11 @@ def osc_handler(address, *args):
     data = parsed[2:] if len(parsed) > 2 else []
 
     receive(command, data)
-    # send(log_command, companion_sender_host_ip)
-    # if(companion_sender_host_ip != companion_host_ip):
-    #     log_command[0] = "Recv External RaspberryPi Logs"
-    #     log(f"[EXTERNAL] cmd triggered: {companion_host_ip}")
-    #     send(log_command,companion_host_ip)
+    send(log_command, companion_sender_host_ip)
+    if(companion_sender_host_ip != companion_host_ip):
+        log_command[0] = "Recv External RaspberryPi Logs"
+        log(f"[EXTERNAL] cmd triggered: {companion_host_ip}")
+        send(log_command,companion_host_ip)
 
 def main():
     global local_ip, companion_host_ip
