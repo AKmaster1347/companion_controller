@@ -249,6 +249,7 @@ def send(data, send_ip = None):
     try:
         data.insert(1, pi_name)
         data = "|".join(map(str, data))
+        data = "-" + data + "-"
         client = get_client(send_ip)
         client.send_message(send_path, data)
         log(f"[OSC SEND] {data}")
