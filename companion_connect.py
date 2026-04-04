@@ -61,8 +61,13 @@ def receive(command, data):
             log(f"[OSC SEND CMD] Sending connection status")
             send([
                 "Recv RaspberryPi Connection Status",
+                "Host name: ",
+                companion_host_name,
+                "Host ip: ",
                 companion_host_ip,
+                "Satellite ip:",
                 get_satellite_ip(),
+                "Sat connection?:",
                 str(check_satellite_connectivity())
             ])
 
