@@ -179,6 +179,7 @@ def osc_handler(address, *args):
     data = parsed[2:] if len(parsed) > 2 else []
 
     receive(command, data)
+    time.sleep(1)
     send(log_command, companion_sender_host_ip)
     if(companion_sender_host_ip != companion_host_ip):
         log_command[0] = "Recv RaspberryPi External Logs"
@@ -253,7 +254,6 @@ def send(data, send_ip = None):
         client = get_client(send_ip)
         client.send_message(send_path, data)
         log(f"[OSC SEND] {data}")
-        time.sleep(0.1)
     except Exception as e:
         log(f"[ERROR] Failed to send data {data} to '{send_ip}' error: {e}")
 
