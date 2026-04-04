@@ -27,7 +27,7 @@ VENV_PYTHON = "/home/tech-ministry/companion-env/bin/python"
 
 
 # ---------------- RUNTIME VARIABLES ----------------
-SCRIPT_VERSION = 1.4
+SCRIPT_VERSION = 1.5
 
 SCRIPT_PATH = f"{REPO_DIR}/companion_connect.py"
 
@@ -179,7 +179,7 @@ def osc_handler(address, *args):
     data = parsed[2:] if len(parsed) > 2 else []
 
     receive(command, data)
-    time.sleep(1)
+    time.sleep(0.1)
     send(log_command, companion_sender_host_ip)
     if(companion_sender_host_ip != companion_host_ip):
         log_command[0] = "Recv RaspberryPi External Logs"
