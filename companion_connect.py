@@ -18,7 +18,7 @@ osc_port = 7777
 send_path = "/custom-variable/InputCmd/value"
 receive_path = "/python/script/command"
 
-pi_name = "RaspberryPi #1 - User's Pi"
+pi_name = "Raspi-1"
 MAX_LOGS = 100
 
 REPO_DIR = "/home/tech-ministry/companion_controller"
