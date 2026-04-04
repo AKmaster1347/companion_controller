@@ -184,14 +184,19 @@ def osc_handler(address, *args):
     if(companion_sender_host_ip != companion_host_ip):
         log_command[0] = "Recv RaspberryPi External Logs"
         log(f"[EXTERNAL] cmd triggered: {companion_host_ip}")
-        send(log_command,companion_host_ip)
-    match system_status:
-        case "Script Shutdown":
-            os._exit(0)
-        case "System Shutdown":
-            os.system("sudo shutdown now")
-        case "System Restart":
-            os.system("sudo reboot")
+        send(log_command,companion_host_ip)    
+    if system_status != "Running":
+        time.sleep(1)  # Give the OSC packet time to leave the hardware
+        match system_status:
+            case "Script Shutdown":
+                log("[SYSTEM] Exiting script process.")
+                os._exit(0) 
+            case "System Shutdown":
+                log("[SYSTEM] Executing system halt.")
+                os.system("sudo shutdown now")
+            case "System Restart":
+                log("[SYSTEM] Executing system reboot.")
+                os.system("sudo reboot")
 
 def main():
     global local_ip, companion_host_ip
