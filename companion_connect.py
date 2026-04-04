@@ -350,7 +350,7 @@ def companion_connect():
                 try:
                     get_client(ip).send_message(
                         send_path,
-                        json.dumps(["Resolution Success", host, ip])
+                        json.dumps(["Recv RaspberryPi Logs: Resolve success", pi_name, host, ip])
                     )
                 except:
                     pass
@@ -364,7 +364,7 @@ def companion_connect():
                 try:
                     get_client(host).send_message(
                         send_path,
-                        json.dumps(["Resolution Failed", host])
+                        json.dumps(["Recv RaspberryPi Logs: Resolve failure", pi_name, host])
                     )
                 except:
                     pass
