@@ -15,7 +15,7 @@ companion_hostname_list = ["Aspire14.local", "Skybox-Lighting.local", "Cave-Vide
 
 osc_port = 7777
 
-send_path = "/custom-variable/RaspberryPiData/value"
+send_path = "/custom-variable/InputCmd/value"
 receive_path = "/python/script/command"
 
 pi_name = "RaspberryPi #1 - User's Pi"
@@ -86,7 +86,7 @@ def receive(command, data):
             else:
                 log(f"[ERROR] Missing required data: {data}")
 #not functional, no such thinkg as companion_satellite.service
-        case "Recv Satellite Reboot":
+        case "Recv Satellite Restart":
             log("[OSC RECV CMD] Restarting satellite service")
             os.system("sudo systemctl restart companion-satellite")
         
@@ -133,7 +133,7 @@ def receive(command, data):
             log("[RECV OSC CMD] System shutting down")
             os.system("sudo shutdown now")
 
-        case "Recv System Reboot":
+        case "Recv System Restart":
             log("[RECV OSC CMD] System rebooting")
             os.system("sudo reboot")
 
