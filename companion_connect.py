@@ -27,7 +27,7 @@ VENV_PYTHON = "/home/tech-ministry/companion-env/bin/python"
 
 
 # ---------------- RUNTIME VARIABLES ----------------
-SCRIPT_VERSION = 1.3
+SCRIPT_VERSION = 1.4
 
 SCRIPT_PATH = f"{REPO_DIR}/companion_connect.py"
 
@@ -55,7 +55,7 @@ def receive(command, data):
         # Send commands
         case "Send Ping":
             log(f"[OSC SEND CMD] Sending ping")
-            send(["Recv RaspberryPi Ping", local_ip, SCRIPT_VERSION])
+            send(["Recv RaspberryPi Ping", local_ip, "Version: ", SCRIPT_VERSION])
 
         case "Send Connection Status":
             log(f"[OSC SEND CMD] Sending connection status")
