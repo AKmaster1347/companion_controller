@@ -41,11 +41,14 @@ satellite_api = "http://127.0.0.1:9999/api"
 log_main = []
 log_command = []
 clients = {}
+
+system_status = "Running"
 # --------------------------------------------------
 
 
 # ---------------- MAIN FUNCTIONS ----------------
 def receive(command, data):
+    global system_status
     log(f"[OSC RECEIVE] '{command}' command recieved from '{companion_sender_host_name} ({companion_sender_host_ip})' with data '{data}'")
 
     match command:
@@ -70,12 +73,8 @@ def receive(command, data):
 
         case "Send System Status":
             log(f"[OSC SEND CMD] Sending system status")
-            stats = {
-                "cpu": psutil.cpu_percent(),
-                "memory": psutil.virtual_memory().percent,
-                "uptime": time.time() - psutil.boot_time()
-            }
-            send(["System Stats", stats])
+            stats = f"cpu: {psutil.cpu_percent()}, memory: {psutil.virtual_memory().percent}, uptime: {time.time() - psutil.boot_time()}"
+            send(["Recv RaspberryPi System Stats", stats])
 
         # Recieve commands
         case "Recv Set Hostname":
@@ -124,22 +123,26 @@ def receive(command, data):
 
                 # Step 5: Restart
                 log("[SCRIPT] Restarting via systemd...")
-                os._exit(0)
+                system_status = "Script Shutdown"
+                #os._exit(0)
 
             except Exception as e:
                 log(f"[SCRIPT ERROR] {e}")
 
         case "Recv System Shutdown":
             log("[RECV OSC CMD] System shutting down")
-            os.system("sudo shutdown now")
+            system_status = "System Shutdown"
+            #os.system("sudo shutdown now")
 
         case "Recv System Restart":
             log("[RECV OSC CMD] System rebooting")
-            os.system("sudo reboot")
+            system_status = "System Restart"
+            #os.system("sudo reboot")
 
         case "Recv Script Shutdown":
             log("[RECV OSC CMD] Script shutting down")
-            os._exit(0)
+            system_status = "Script Shutdown"
+            #os._exit(0)
 
         case _:
             log(f"[OSC CMD] Unknown command: {command}")
@@ -179,9 +182,16 @@ def osc_handler(address, *args):
     receive(command, data)
     send(log_command, companion_sender_host_ip)
     if(companion_sender_host_ip != companion_host_ip):
-        log_command[0] = "Recv External RaspberryPi Logs"
+        log_command[0] = "Recv RaspberryPi External Logs"
         log(f"[EXTERNAL] cmd triggered: {companion_host_ip}")
         send(log_command,companion_host_ip)
+    match system_status:
+        case "Script Shutdown":
+            os._exit(0)
+        case "System Shutdown":
+            os.system("sudo shutdown now")
+        case "System Restart":
+            os.system("sudo reboot")
 
 def main():
     global local_ip, companion_host_ip
