@@ -55,13 +55,12 @@ def receive(command, data):
         # Send commands
         case "Send Ping":
             log(f"[OSC SEND CMD] Sending ping")
-            send(["Recv RaspberryPi Ping", pi_name, local_ip, SCRIPT_VERSION])
+            send(["Recv RaspberryPi Ping", local_ip, SCRIPT_VERSION])
 
         case "Send Connection Status":
             log(f"[OSC SEND CMD] Sending connection status")
             send([
                 "Recv RaspberryPi Connection Status",
-                pi_name,
                 companion_host_ip,
                 get_satellite_ip(),
                 str(check_satellite_connectivity())
@@ -69,7 +68,7 @@ def receive(command, data):
 
         case "Send Hostname List":
             log(f"[OSC SEND CMD] Sending hostname list")
-            send(["Recv RaspberryPi Hostname List", pi_name, companion_hostname_list])
+            send(["Recv RaspberryPi Hostname List", companion_hostname_list])
 
         case "Send System Status":
             log(f"[OSC SEND CMD] Sending system status")
@@ -184,7 +183,7 @@ def osc_handler(address, *args):
     if(companion_sender_host_ip != companion_host_ip):
         log_command[0] = "Recv RaspberryPi External Logs"
         log(f"[EXTERNAL] cmd triggered: {companion_host_ip}")
-        send(log_command,companion_host_ip)    
+        send(log_command, companion_host_ip)    
     if system_status != "Running":
         time.sleep(1)  # Give the OSC packet time to leave the hardware
         match system_status:
@@ -247,13 +246,14 @@ def send(data, send_ip = None):
     # If no IP is provided, use the global/constant one
     if send_ip is None:
         send_ip = companion_sender_host_ip
-        
     try:
+        data.insert(1, pi_name)
+        data = "|".join(map(str, data))
         client = get_client(send_ip)
-        client.send_message(send_path, json.dumps(data))
+        client.send_message(send_path, data)
         log(f"[OSC SEND] {data}")
     except Exception as e:
-        log(f"[ERROR] Failed to send data to '{send_ip}' error: {e}")
+        log(f"[ERROR] Failed to send data {data} to '{send_ip}' error: {e}")
 
 
 def start_osc_server():
