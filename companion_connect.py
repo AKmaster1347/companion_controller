@@ -252,6 +252,7 @@ def send(data, send_ip = None):
         client = get_client(send_ip)
         client.send_message(send_path, data)
         log(f"[OSC SEND] {data}")
+        time.sleep(0.1)
     except Exception as e:
         log(f"[ERROR] Failed to send data {data} to '{send_ip}' error: {e}")
 
