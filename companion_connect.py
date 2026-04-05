@@ -27,7 +27,7 @@ VENV_PYTHON = "/home/tech-ministry/companion-env/bin/python"
 
 
 # ---------------- RUNTIME VARIABLES ----------------
-SCRIPT_VERSION = 1.5
+SCRIPT_VERSION = 1.6
 
 SCRIPT_PATH = f"{REPO_DIR}/companion_connect.py"
 
@@ -224,7 +224,9 @@ def main():
             except:
                 log("[NETWORK] Failed to re-resolve host")
                 continue
-        time.sleep(60)
+        if !check_satellite_connectivity():
+            set_satellite_ip(companion_host_ip)
+        time.sleep(30)
 # -----------------------------------------
 
 
