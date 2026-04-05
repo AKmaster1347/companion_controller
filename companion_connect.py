@@ -55,14 +55,14 @@ def receive(command, data):
         # Send commands
         case "Send Ping":
             log(f"[OSC SEND CMD] Sending ping")
-            send(["Recv RaspberryPi Ping" + local_ip, "Version: " + SCRIPT_VERSION])
+            send(["Recv RaspberryPi Ping" + local_ip, "Version: " + str(SCRIPT_VERSION)])
 
         case "Send Connection Status":
             log(f"[OSC SEND CMD] Sending connection status")
             send([
                 "Recv RaspberryPi Connection Status",
                 "Host name: " + companion_host_name,
-                "Host ip: " + companion_host_ip,
+                "Host ip: " + companion_host_ip),
                 "Satellite ip:" + get_satellite_ip(),
                 "Sat connection?:" + str(check_satellite_connectivity())
             ])
@@ -220,7 +220,7 @@ def main():
             except:
                 log("[NETWORK] Failed to re-resolve host")
                 continue
-        if !check_satellite_connectivity():
+        if not check_satellite_connectivity():
             set_satellite_ip(companion_host_ip)
         time.sleep(30)
 # -----------------------------------------
