@@ -55,7 +55,7 @@ def receive(command, data):
         # Send commands
         case "Send Ping":
             log(f"[OSC SEND CMD] Sending ping")
-            send(["Recv RaspberryPi Ping" + local_ip, "Version: " + str(SCRIPT_VERSION)])
+            send(["Recv RaspberryPi Ping", "Local IP: " + local_ip, "Version: " + str(SCRIPT_VERSION)])
 
         case "Send Connection Status":
             log(f"[OSC SEND CMD] Sending connection status")
